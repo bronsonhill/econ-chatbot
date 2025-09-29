@@ -83,6 +83,14 @@ def setup():
     if "user_identifier" not in st.session_state:
         st.session_state["user_identifier"] = ""
 
+    # Hint system
+    if "hint_index" not in st.session_state:
+        st.session_state["hint_index"] = 0
+
+    # Track recent hints for conversation context
+    if "recent_hints" not in st.session_state:
+        st.session_state["recent_hints"] = []
+
     # OpenAI conversation ID
     if "openai_conversation_id" not in st.session_state:
         st.session_state["openai_conversation_id"] = None
@@ -124,6 +132,38 @@ def clear_conversation():
     st.session_state["chat_history"] = []
     st.session_state["response_counter"] = 0
     st.session_state["conversation_finished"] = False
+    st.session_state["hint_index"] = 0  # Reset hint index when clearing conversation
+    st.session_state["recent_hints"] = []  # Clear recent hints when clearing conversation
+
+def get_next_hint():
+    """Get the next hint from solution.md"""
+    try:
+        with open("prompts/solution.md", 'r') as file:
+            lines = file.readlines()
+            current_index = st.session_state.get("hint_index", 0)
+
+            # Keep looking for the next non-empty line
+            while current_index < len(lines):
+                hint_line = lines[current_index].strip()
+                if hint_line:  # Found a non-empty line
+                    return hint_line, current_index
+                current_index += 1
+
+            return None, -1  # No more hints available
+    except FileNotFoundError:
+        return None, -1
+
+def show_next_hint():
+    """Add the next hint to chat history"""
+    hint, hint_line_index = get_next_hint()
+    if hint is not None:
+        hint_message = f"Let's read a hint: {hint}"
+        st.session_state.chat_history.append({"role": "assistant", "content": hint_message})
+        # Add hint to recent hints for conversation context
+        st.session_state.recent_hints.append(hint_message)
+        # Update hint_index to point to the next line to check
+        st.session_state.hint_index = hint_line_index + 1
+        st.rerun()
 
 def change_prompt_and_reset(new_prompt):
     """Change the current prompt and reset conversation"""
@@ -278,11 +318,16 @@ def chat_page():
 
                 # Get streaming response from OpenAI using Responses API
                 response = ""  # Initialize response variable
+
+                # Combine recent hints with current user input
+                recent_hints_text = "\n".join(st.session_state.recent_hints) if st.session_state.recent_hints else ""
+                combined_input = f"{recent_hints_text}\n\nUser: {prompt}".strip()
+
                 try:
                     stream = client.responses.create(
                         model=st.session_state["model"],
                         conversation=conversation_id,  # Use conversation ID, not messages array
-                        input=prompt,  # Pass the user input
+                        input=combined_input,  # Pass combined input with recent hints
                         instructions=st.session_state["current_prompt_content"],
                         stream=True,
                         max_output_tokens=500
@@ -339,9 +384,38 @@ def chat_page():
 
                     response = response_text
 
+                except Exception as e:
+                    st.error(f"Error generating response: {e}")
+                    response = ""  # Ensure response is set even on error
+                    # Fallback to chat completions API
+                    messages = [
+                        {"role": "system", "content": st.session_state["current_prompt_content"]}
+                    ] + [
+                        {"role": m["role"], "content": m["content"]}
+                        for m in st.session_state.chat_history
+                    ]
+
+                    fallback_stream = client.chat.completions.create(
+                        model=st.session_state["model"],
+                        messages=messages,
+                        stream=True,
+                        max_tokens=500
+                    )
+
+                    response_container = st.empty()
+                    response_text = ""
+                    for chunk in fallback_stream:
+                        if chunk.choices[0].delta.content is not None:
+                            response_text += chunk.choices[0].delta.content
+                            response_container.markdown(response_text)
+
+                    response = response_text
+
             # Update counters and history
             st.session_state.response_counter += 1
             st.session_state.chat_history.append({"role": "assistant", "content": response})
+            # Clear recent hints after each response to prevent accumulation
+            st.session_state.recent_hints = []
         else:
             # Maximum responses reached
             with st.chat_message("assistant"):
@@ -351,9 +425,18 @@ def chat_page():
             st.session_state.chat_history.append(final_message)
             st.session_state.conversation_finished = True
 
-    # Finish conversation button
-    col1, col2, col3 = st.columns([1, 2, 1])
+    # Action buttons
+    col1, col2, col3, col4 = st.columns([1, 1.5, 1.5, 1])
+
+    # Show Hint button
     with col2:
+        hint_available, _ = get_next_hint()
+        if not st.session_state.conversation_finished and st.session_state.chat_history and hint_available:
+            if st.button("Show Hint", key="show_hint", use_container_width=True):
+                show_next_hint()
+
+    # End Study Session button
+    with col3:
         if not st.session_state.conversation_finished and st.session_state.chat_history:
             if st.button("End Study Session", key="finish_chat", use_container_width=True, type="primary"):
                 st.session_state.conversation_finished = True
