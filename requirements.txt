@@ -1,0 +1,6 @@
+openai>=1.109.1
+pymongo>=4.7
+python-dotenv
+streamlit>=1.40.2
+pandas>=1.5.0
+toml>=0.10.0
