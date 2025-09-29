@@ -2,3 +2,4 @@
 rabbit_access_codes*
 .DS_Store
 *.pyc
+venv/
