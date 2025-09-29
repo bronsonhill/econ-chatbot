@@ -232,7 +232,7 @@ def chat_page():
         prompt_display_names = {
             "rabbit_v1": "V1 - Not given solution ",
             "rabbit_v2": "V2 - Given solution",
-            "rabbit_v3": "V3 - Not given solution, but provides hints"
+            "rabbit_v3": "V3 - Hints"
         }
 
         # Current prompt selection
