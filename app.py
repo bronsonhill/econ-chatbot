@@ -106,6 +106,13 @@ def create_or_get_conversation(client):
         try:
             # Create new conversation
             conversation = client.conversations.create(
+                items=[
+                    {
+                        "type": "message",
+                        "role": "assistant",
+                        "content": "Hi, I am Rabbit! What is your name?"
+                    }
+                ],
                 metadata={
                     "user_identifier": st.session_state.get("user_identifier", "unknown"),
                     "session_type": "economics_study"
@@ -330,8 +337,8 @@ def chat_page():
                         input=combined_input,  # Pass combined input with recent hints
                         instructions=st.session_state["current_prompt_content"],
                         stream=True,
-                        max_output_tokens=500
-                        # reasoning={"effort": ReasoningEffort.MINIMAL}
+                        max_output_tokens=500,
+                        reasoning={"effort": "minimal"}
                     )
 
                     # Handle streaming response
@@ -431,7 +438,11 @@ def chat_page():
     # Show Hint button
     with col2:
         hint_available, _ = get_next_hint()
-        if not st.session_state.conversation_finished and st.session_state.chat_history and hint_available:
+        current_prompt = st.session_state.get("current_prompt", "rabbit_v1")
+        if (not st.session_state.conversation_finished and
+            st.session_state.chat_history and
+            hint_available and
+            current_prompt == "rabbit_v3"):
             if st.button("Show Hint", key="show_hint", use_container_width=True):
                 show_next_hint()
 
