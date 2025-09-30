@@ -337,7 +337,7 @@ def chat_page():
                         input=combined_input,  # Pass combined input with recent hints
                         instructions=st.session_state["current_prompt_content"],
                         stream=True,
-                        max_output_tokens=500,
+                        max_output_tokens=300,
                         reasoning={"effort": "minimal"}
                     )
 
@@ -346,7 +346,6 @@ def chat_page():
                     response_text = ""
 
                     for chunk in stream:
-                        print(chunk)
                         # Handle different chunk types from OpenAI Responses API
                         if hasattr(chunk, 'type'):
                             chunk_type = chunk.type
@@ -379,7 +378,7 @@ def chat_page():
                         model=st.session_state["model"],
                         messages=messages,
                         stream=True,
-                        max_tokens=500
+                        max_tokens=350
                     )
 
                     response_container = st.empty()
@@ -406,7 +405,7 @@ def chat_page():
                         model=st.session_state["model"],
                         messages=messages,
                         stream=True,
-                        max_tokens=500
+                        max_tokens=350
                     )
 
                     response_container = st.empty()
