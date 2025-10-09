@@ -239,7 +239,8 @@ def chat_page():
         prompt_display_names = {
             "rabbit_v1": "V1 - Not given solution ",
             "rabbit_v2": "V2 - Given solution",
-            "rabbit_v3": "V3 - Hints"
+            "rabbit_v3": "V3 - Hints",
+            "rabbit_v4": "V4 - Focussed role with misconceptions"
         }
 
         # Current prompt selection
@@ -337,7 +338,7 @@ def chat_page():
                         input=combined_input,  # Pass combined input with recent hints
                         instructions=st.session_state["current_prompt_content"],
                         stream=True,
-                        max_output_tokens=300,
+                        max_output_tokens=200,
                         reasoning={"effort": "minimal"}
                     )
 
@@ -378,7 +379,7 @@ def chat_page():
                         model=st.session_state["model"],
                         messages=messages,
                         stream=True,
-                        max_tokens=350
+                        max_tokens=200
                     )
 
                     response_container = st.empty()
@@ -405,7 +406,7 @@ def chat_page():
                         model=st.session_state["model"],
                         messages=messages,
                         stream=True,
-                        max_tokens=350
+                        max_tokens=200
                     )
 
                     response_container = st.empty()
