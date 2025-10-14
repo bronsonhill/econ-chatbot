@@ -375,7 +375,7 @@ def chat_page():
                         input=combined_input,  # Pass combined input with recent hints
                         instructions=st.session_state["current_prompt_content"],
                         stream=True,
-                        max_output_tokens=200,
+                        max_output_tokens=250,
                         reasoning={"effort": "minimal"}
                     )
 
@@ -416,7 +416,7 @@ def chat_page():
                         model=st.session_state["model"],
                         messages=messages,
                         stream=True,
-                        max_tokens=200
+                        max_tokens=250
                     )
 
                     response_container = st.empty()
@@ -443,7 +443,7 @@ def chat_page():
                         model=st.session_state["model"],
                         messages=messages,
                         stream=True,
-                        max_tokens=200
+                        max_tokens=250
                     )
 
                     response_container = st.empty()
