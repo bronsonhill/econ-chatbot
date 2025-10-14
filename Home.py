@@ -31,7 +31,7 @@ def get_prompt_with_context(prompt_name):
     base_prompt = load_available_prompts().get(prompt_name, "")
 
     # Add the same economics problem context for all prompt variations
-    economics_problem = """Assume that a perfectly competitive, constant-cost industry (with free entry and exit) is in along-run equilibrium with 40 firms. The market demand function is downward sloping. All firms have the same U-shaped average cost functions. Each firm produces 60 units of output, which it sells at a price of $27 per unit; out of this amount, each firm pays a $3 tax per unit of output. Please refer to the graphs below, which depict the initial equilibrium.
+    economics_problem = """Assume that a perfectly competitive, constant-cost industry (with free entry and exit) is in along-run equilibrium with 40 firms. The market demand function is downward sloping. All firms have the same U-shaped average cost functions. Each firm produces 60 units of output, which it sells at a price of \$27 per unit; out of this amount, each firm pays a $3 tax per unit of output. Please refer to the graphs below, which depict the initial equilibrium.
 
 The government decides to decrease the tax so that firms will pay \$1 per unit in tax.
 
