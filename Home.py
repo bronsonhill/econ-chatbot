@@ -31,15 +31,51 @@ def get_prompt_with_context(prompt_name):
     base_prompt = load_available_prompts().get(prompt_name, "")
 
     # Add the same economics problem context for all prompt variations
-    economics_context = """Assume that a perfectly competitive, constant-cost industry is in a long-run equilibrium with 40 firms. The market demand function is downward sloping. All firms have the same U-shaped average cost functions. Each firm produces 60 units of output, which it sells at a price of \$27 per unit; out of this amount, each firm pays a \$3 tax per unit of output. Please refer to the graph below, which depicts the initial equilibrium.
+    economics_problem = """Assume that a perfectly competitive, constant-cost industry (with free entry and exit) is in along-run equilibrium with 40 firms. The market demand function is downward sloping. All firms have the same U-shaped average cost functions. Each firm produces 60 units of output, which it sells at a price of $27 per unit; out of this amount, each firm pays a $3 tax per unit of output. Please refer to the graphs below, which depict the initial equilibrium.
 
 The government decides to decrease the tax so that firms will pay \$1 per unit in tax.
 
-a) Explain what would happen in the short run to the equilibrium price and industry output, the number of firms in the industry, output and profit of each firm. Illustrate on graphs for the market and a particular firm.
+a) Consider the graphs below, which depict the initial long-run (LR) equilibrium. What are the equilibrium price pA and output QA? What is the output qa? What is the profit ofeach firm? Why? How could we determine from the graphs that this industry is indeed in the LR equilibrium?
 
-b) Explain what would happen in the long run to the equilibrium price and industry output, the number of firms in the industry, and the output and profit of each firm. Illustrate on graphs for the market and a particular firm. Compare this new long-run equilibrium to the initial long-run equilibrium and to the short-run equilibrium found in a)."""
+b) Explain what would happen in the short run (SR) to the equilibrium price and industry output, the number of firms in the industry, output and profit of each firm. Illustrate on graphs for the market and a particular firm. Please label the market equilibrium point as B (price pB and output QB) and the firm’s point as b (output qb).
 
-    return base_prompt + "\n\n## The Economics Problem\n" + economics_context
+c) Explain what would happen in the long run (LR) to the equilibrium price and industry output, the number of firms in the industry, and the output and profit of each firm. Illustrate on graphs for the market and a particular firm. Please label the market equilibrium point as C (price pC and output QC) and the firm’s point as c (output qc). Compare this new long-run equilibrium to the initial long-run equilibrium, described in part (a), and to the short-run equilibrium found in part (b).
+"""
+
+    economics_solution = """a) The initial long-run (LR) equilibrium. The initial market equilibrium is at point A, where market demand intersects the initial SR industry supply (which is upward sloping). At the same point, the demand intersects the LR industry supply (which is a horizontal line at the price pA). We know that the current LR equilibrium price is pA = \$27. This is the price consumers pay. Firms receive this price and then pay \$3 in tax to the government. Because there are 40 firms in the industry, and each firm produces output $qa = 60$ units, the market (industry) output is $QA = 40*60 = 2400$. The average cost curve (AC) of each firm takes into account the \$3 per unit tax. Each firm produces at the minimum of its AC, which is achieved at the output $qa= 60$. This is represented by point a on the graph for the firm below (on the right). To maximise its profit, each firm produces the output such that price equals MC. Here, the price also equals the minimum of the average cost AC. When price equals AC, a firm's profit is zero. Because firms make zero profits in equilibrium, we know that this industry is in the LR equilibrium.
+
+b) per unit tax decreased by $2, Short-Run (SR) equilibrium. 
+    
+After tax is reduced by \$2, the average cost (AC) and the marginal cost (MC) curves of each firm shift down by the amount of tax decrease, $Δt = \$2$ (because this is a per-unit tax, the reduction in AC and MC is equal to the reduction in tax, \$2). Therefore, the minimum of the new AC will be at \$25. The number of firms in the industry stays the same in SR because firms are not able to enter or exit the industry in SR. Therefore, the industry supply, which is the horizontal sum of the supplies of all firms, shifts down by $2 as well. We can also think of it as a shift of SR industry supply to the right.
+
+What would happen in the SR equilibrium? The demand function stays the same, but the supply function shifts down (or to the right); therefore, the new intersection point B, the new SR equilibrium, will correspond to a lower price pB and the higher output QB.
+
+Because the demand function is downward sloping, and the downward-sloping supply function shifts down by \$2, the price will decrease by less than \$2.
+
+SR equilibrium (summary): price is pB (decreases from the initial price of \$27 by less than \$2), market output is QB, higher than the initial quantity of 2400. The market SR equilibrium is at point B. The number of firms stays the same.
+
+At the new SR equilibrium price, pB, each firm produces output qb. At this output, the MC of the firm equals the price, which guarantees that the firm maximises its profit. The output qb is greater than $qa = 60$, because MC and AC shifts down by \$2, but the price decreases by less than \$2. The output qb is not at the minimum of the AC for tax = \$1, it is to the right. Therefore, at this output, MC (which is equal to price pb) is above the AC, and the firm will make a positive profit (represented by the green rectangle). 
+
+Each firm in the SR equilibrium (summary): output is $qb > qa = 60$; profit is positive.
+
+c) per unit tax decreased by \$2, Long Run (LR) equilibrium.
+
+What would happen in the long run? Because each firm makes a positive profit in SR, this could not be an LR equilibrium. Attracted by positive profits, new firms start entering the industry. As a result, the SR industry supply shifts even further to the right (because more firms can produce more output for any given price). As more firms keep entering, the industry supply shifts further and further. 
+
+As demand stays the same (does not shift), but supply increases (shifts to the right), the market price decreases. How long will this process of firms entering and price decreasing continue? The firms will enter as long as profits are positive. Because more firms result in a lower market price for their output, the profits in the industry decrease as the number of firms increases. Note that each firm will also decrease its output in response to a lower price. Firms will enter until the price reaches $pC = \$25$, the new minimum of the ACLR curve, when firms make zero profit.
+
+Therefore, in the LR, the price will decrease by exactly the amount of tax reduction, \$2.
+
+New LR equilibrium (summary): price $pC = \$25$, output QC (LR equilibrium is at point C); more firms in the industry; each firm produces output $qa= 60$ and makes zero profit.
+
+Compared to the initial LR equilibrium (described in part a): price down to \$25 (it decreases by the same amount as the tax decrease, \$2), market output Q is up, quantity produced by each firm is the same: $qa  = 60$, profits are the same (equal to zero), the number of firms N increased.
+
+Compared to the SR equilibrium (found in part b): price is down, market output is up, quantity produced by each firm is down, profits are down to 0, and the number of firms in the industry, N, increased.
+
+    
+    """
+
+    return base_prompt + "\n\n## The Economics Problem\n" + economics_problem + "\n\n## The Solution\n" + economics_solution
 
 def setup():
     # Load available prompt variations
@@ -240,7 +276,8 @@ def chat_page():
             "rabbit_v1": "V1 - Not given solution ",
             "rabbit_v2": "V2 - Given solution",
             "rabbit_v3": "V3 - Hints",
-            "rabbit_v4": "V4 - Focussed role with misconceptions"
+            "rabbit_v4": "V4 - Focussed role with misconceptions",
+            "rabbit_v5": "V5 - Problem and Solution v5 with example transcript"
         }
 
         # Current prompt selection
