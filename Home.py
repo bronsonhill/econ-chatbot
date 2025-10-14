@@ -313,7 +313,7 @@ def chat_page():
         st.markdown(f"**Current Prompt:** {prompt_display_names.get(current_prompt, current_prompt)}")
     st.markdown("*Help Rabbit understand Intermediate Microeconomics concepts*")
     st.markdown("### Problem: Tax in a Perfectly Competitive Industry")
-    st.markdown("""Assume that a perfectly competitive, constant-cost industry (with free entry and exit) is in along-run equilibrium with 40 firms. The market demand function is downward sloping. All firms have the same U-shaped average cost functions. Each firm produces 60 units of output, which it sells at a price of $27 per unit; out of this amount, each firm pays a $3 tax per unit of output. Please refer to the graphs below, which depict the initial equilibrium.
+    st.markdown("""Assume that a perfectly competitive, constant-cost industry (with free entry and exit) is in along-run equilibrium with 40 firms. The market demand function is downward sloping. All firms have the same U-shaped average cost functions. Each firm produces 60 units of output, which it sells at a price of \$27 per unit; out of this amount, each firm pays a $3 tax per unit of output. Please refer to the graphs below, which depict the initial equilibrium.
 
 The government decides to decrease the tax so that firms will pay \$1 per unit in tax.
 
@@ -323,9 +323,6 @@ b) Explain what would happen in the short run (SR) to the equilibrium price and 
 
 c) Explain what would happen in the long run (LR) to the equilibrium price and industry output, the number of firms in the industry, and the output and profit of each firm. Illustrate on graphs for the market and a particular firm. Please label the market equilibrium point as C (price pC and output QC) and the firm’s point as c (output qc). Compare this new long-run equilibrium to the initial long-run equilibrium, described in part (a), and to the short-run equilibrium found in part (b).
 """)
-    st.markdown("The government decides to decrease the tax so that firms will pay \$1 per unit in tax.")
-    st.markdown("a) Explain what would happen in the short run to the equilibrium price and industry output, the number of firms in the industry, output and profit of each firm. Illustrate on graphs for the market and a particular firm.")
-    st.markdown("b) Explain what would happen in the long run to the equilibrium price and industry output, the number of firms in the industry, and the output and profit of each firm. Illustrate on graphs for the market and a particular firm. Compare this new long-run equilibrium to the initial long-run equilibrium and to the short-run equilibrium found in a).")
     st.image("prompts/tax_in_a_perfectly_competitive_industry.png", output_format="auto", channels="RGB", caption=None)
     st.markdown(
         """
