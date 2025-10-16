@@ -2,7 +2,7 @@ from openai.types.shared.reasoning_effort import ReasoningEffort
 from pandas import read_sas
 import streamlit as st
 from openai import OpenAI
-from utils.mongodb import check_identifier
+from utils.mongodb import check_identifier, log_message, update_session_key
 import os
 
 def is_identifier_valid():
@@ -107,13 +107,18 @@ def setup():
     if "conversation_finished" not in st.session_state:
         st.session_state["conversation_finished"] = False
 
+    # Message counter for real-time saving
+    if "message_counter" not in st.session_state:
+        st.session_state["message_counter"] = 0
+
     # MongoDB connection
     if "mongodb_uri" not in st.session_state:
         st.session_state["mongodb_uri"] = st.secrets["MONGODB_CONNECTION_STRING"]
 
-    # Session tracking
+    # Session tracking - generate unique session ID if not exists
     if "session_id" not in st.session_state:
-        st.session_state["session_id"] = None
+        import uuid
+        st.session_state["session_id"] = str(uuid.uuid4())
 
     # User identifier
     if "user_identifier" not in st.session_state:
@@ -177,6 +182,11 @@ def clear_conversation():
     st.session_state["conversation_finished"] = False
     st.session_state["hint_index"] = 0  # Reset hint index when clearing conversation
     st.session_state["recent_hints"] = []  # Clear recent hints when clearing conversation
+    st.session_state["message_counter"] = 0  # Reset message counter when clearing conversation
+    st.session_state["conversation_id_set"] = False  # Reset conversation ID flag
+    # Generate new session ID for new conversation
+    import uuid
+    st.session_state["session_id"] = str(uuid.uuid4())
 
 def get_next_hint():
     """Get the next hint from solution.md"""
@@ -201,7 +211,21 @@ def show_next_hint():
     hint, hint_line_index = get_next_hint()
     if hint is not None:
         hint_message = f"Let's read a hint: {hint}"
-        st.session_state.chat_history.append({"role": "assistant", "content": hint_message})
+        hint_message_obj = {"role": "assistant", "content": hint_message}
+        st.session_state.chat_history.append(hint_message_obj)
+        
+        # Save hint message to database in real-time
+        try:
+            log_message(
+                st.session_state["mongodb_uri"],
+                "rabbit_study",
+                hint_message_obj,
+                st.session_state["message_counter"]
+            )
+            st.session_state["message_counter"] += 1
+        except Exception as e:
+            st.error(f"Error saving message: {e}")
+        
         # Add hint to recent hints for conversation context
         st.session_state.recent_hints.append(hint_message)
         # Update hint_index to point to the next line to check
@@ -336,8 +360,45 @@ c) Explain what would happen in the long run (LR) to the equilibrium price and i
     )
     # Add initial Rabbit message if chat history is empty
     if not st.session_state.chat_history:
+        # Ensure we have a conversation ID before the first message
+        conversation_id = create_or_get_conversation(client)
+        if not conversation_id:
+            st.error("Failed to create conversation. Please try again.")
+            return
+        
+        # If this is the first time we got a conversation ID, update the session key
+        if conversation_id and not st.session_state.get("conversation_id_set"):
+            user_identifier = st.session_state.get("user_identifier", "anonymous")
+            session_id = st.session_state.get("session_id", "unknown_session")
+            old_session_key = f"{user_identifier}_{session_id}"
+            new_session_key = f"{user_identifier}_{conversation_id}"
+            
+            try:
+                update_session_key(
+                    st.session_state["mongodb_uri"],
+                    old_session_key,
+                    new_session_key,
+                    "rabbit_study"
+                )
+                st.session_state["conversation_id_set"] = True
+            except Exception as e:
+                st.error(f"Error updating session key: {e}")
+        
         initial_message = "Hi, I am Rabbit! What is your name?"
-        st.session_state.chat_history.append({"role": "assistant", "content": initial_message})
+        message_obj = {"role": "assistant", "content": initial_message}
+        st.session_state.chat_history.append(message_obj)
+        
+        # Save initial message to database in real-time
+        try:
+            log_message(
+                st.session_state["mongodb_uri"],
+                "rabbit_study",
+                message_obj,
+                st.session_state["message_counter"]
+            )
+            st.session_state["message_counter"] += 1
+        except Exception as e:
+            st.error(f"Error saving message: {e}")
 
     # Display chat history
     for message in st.session_state.chat_history:
@@ -352,7 +413,20 @@ c) Explain what would happen in the long run (LR) to the equilibrium price and i
         disabled=st.session_state.conversation_finished or st.session_state.response_counter >= MAXIMUM_RESPONSES
     ):
         # Add user message to history
-        st.session_state.chat_history.append({"role": "user", "content": prompt})
+        user_message = {"role": "user", "content": prompt}
+        st.session_state.chat_history.append(user_message)
+        
+        # Save user message to database in real-time
+        try:
+            log_message(
+                st.session_state["mongodb_uri"],
+                "rabbit_study",
+                user_message,
+                st.session_state["message_counter"]
+            )
+            st.session_state["message_counter"] += 1
+        except Exception as e:
+            st.error(f"Error saving message: {e}")
 
         # Display user message
         with st.chat_message("user"):
@@ -463,7 +537,21 @@ c) Explain what would happen in the long run (LR) to the equilibrium price and i
 
             # Update counters and history
             st.session_state.response_counter += 1
-            st.session_state.chat_history.append({"role": "assistant", "content": response})
+            assistant_message = {"role": "assistant", "content": response}
+            st.session_state.chat_history.append(assistant_message)
+            
+            # Save assistant message to database in real-time
+            try:
+                log_message(
+                    st.session_state["mongodb_uri"],
+                    "rabbit_study",
+                    assistant_message,
+                    st.session_state["message_counter"]
+                )
+                st.session_state["message_counter"] += 1
+            except Exception as e:
+                st.error(f"Error saving message: {e}")
+            
             # Clear recent hints after each response to prevent accumulation
             st.session_state.recent_hints = []
         else:
@@ -473,6 +561,19 @@ c) Explain what would happen in the long run (LR) to the equilibrium price and i
             
             final_message = {"role": "assistant", "content": "Thanks for helping me study! I think I understand this topic much better now. 🐰"}
             st.session_state.chat_history.append(final_message)
+            
+            # Save final message to database in real-time
+            try:
+                log_message(
+                    st.session_state["mongodb_uri"],
+                    "rabbit_study",
+                    final_message,
+                    st.session_state["message_counter"]
+                )
+                st.session_state["message_counter"] += 1
+            except Exception as e:
+                st.error(f"Error saving message: {e}")
+            
             st.session_state.conversation_finished = True
 
     # Action buttons
