@@ -11,24 +11,20 @@ def is_identifier_valid():
         return False
     return check_identifier(st.session_state["mongodb_uri"], identifier)
 
-def load_available_prompts():
-    """Load all available prompt variations from the prompts directory"""
-    prompts_dir = "./prompts"
-    prompts = {}
+def load_rabbit_v5_prompt():
+    """Load the rabbit_v5 prompt from the prompts directory"""
+    prompt_path = "./prompts/rabbit_v5.md"
+    
+    if os.path.exists(prompt_path):
+        with open(prompt_path, 'r') as file:
+            return file.read()
+    else:
+        st.error("Error: rabbit_v5.md prompt file not found!")
+        return ""
 
-    if os.path.exists(prompts_dir):
-        for filename in os.listdir(prompts_dir):
-            if filename.startswith('rabbit_v') and filename.endswith('.md'):
-                prompt_name = filename[:-3]  # Remove .md extension
-                with open(os.path.join(prompts_dir, filename), 'r') as file:
-                    prompt_content = file.read()
-                    prompts[prompt_name] = prompt_content
-
-    return prompts
-
-def get_prompt_with_context(prompt_name):
-    """Get a prompt with the economics problem context"""
-    base_prompt = load_available_prompts().get(prompt_name, "")
+def get_prompt_with_context():
+    """Get the rabbit_v5 prompt with the economics problem context"""
+    base_prompt = load_rabbit_v5_prompt()
 
     # Add the same economics problem context for all prompt variations
     economics_problem = """Assume that a perfectly competitive, constant-cost industry (with free entry and exit) is in along-run equilibrium with 40 firms. The market demand function is downward sloping. All firms have the same U-shaped average cost functions. Each firm produces 60 units of output, which it sells at a price of \$27 per unit; out of this amount, each firm pays a $3 tax per unit of output. Please refer to the graphs below, which depict the initial equilibrium.
@@ -78,18 +74,14 @@ Compared to the SR equilibrium (found in part b): price is down, market output i
     return base_prompt + "\n\n## The Economics Problem\n" + economics_problem + "\n\n## The Solution\n" + economics_solution
 
 def setup():
-    # Load available prompt variations
-    available_prompts = load_available_prompts()
-
     # Initialize current prompt if not set
     if "current_prompt" not in st.session_state:
-        st.session_state["current_prompt"] = "rabbit_v1"  # Default to first variation
+        st.session_state["current_prompt"] = "rabbit_v5"  # Default to v5
 
     # Load current prompt with context
-    current_prompt_name = st.session_state["current_prompt"]
-    if "current_prompt_content" not in st.session_state or st.session_state.get("prompt_version") != current_prompt_name:
-        st.session_state["current_prompt_content"] = get_prompt_with_context(current_prompt_name)
-        st.session_state["prompt_version"] = current_prompt_name
+    if "current_prompt_content" not in st.session_state or st.session_state.get("prompt_version") != "rabbit_v5":
+        st.session_state["current_prompt_content"] = get_prompt_with_context()
+        st.session_state["prompt_version"] = "rabbit_v5"
 
     # Set up model
     if "model" not in st.session_state:
@@ -232,14 +224,7 @@ def show_next_hint():
         st.session_state.hint_index = hint_line_index + 1
         st.rerun()
 
-def change_prompt_and_reset(new_prompt):
-    """Change the current prompt and reset conversation"""
-    if st.session_state.get("current_prompt") != new_prompt:
-        st.session_state["current_prompt"] = new_prompt
-        st.session_state["current_prompt_content"] = get_prompt_with_context(new_prompt)
-        st.session_state["prompt_version"] = new_prompt
-        clear_conversation()
-        st.rerun()
+# Function removed - no longer needed since we only use rabbit_v5
 
 def login_page():
     setup()
@@ -287,42 +272,8 @@ def chat_page():
 
     st.title("🐰 Study Session with Rabbit")
 
-    # Sidebar with prompt selection and conversation management
+    # Sidebar with conversation management
     with st.sidebar:
-        st.markdown("## 🧪 Prompt Testing")
-
-        # Get available prompts
-        available_prompts = load_available_prompts()
-        prompt_names = list(available_prompts.keys())
-
-        # Create display names for prompt variations
-        prompt_display_names = {
-            "rabbit_v1": "V1 - Not given solution ",
-            "rabbit_v2": "V2 - Given solution",
-            "rabbit_v3": "V3 - Hints",
-            "rabbit_v4": "V4 - Focussed role with misconceptions",
-            "rabbit_v5": "V5 - Problem and Solution v5 with example transcript"
-        }
-
-        # Current prompt selection
-        current_prompt = st.session_state.get("current_prompt", "rabbit_v1")
-        display_options = [prompt_display_names.get(name, name) for name in prompt_names]
-
-        selected_display = st.selectbox(
-            "Choose prompt variation for testing:",
-            options=display_options,
-            index=prompt_names.index(current_prompt) if current_prompt in prompt_names else 0,
-            key="prompt_selector"
-        )
-
-        # Map back to prompt name
-        selected_prompt_name = prompt_names[display_options.index(selected_display)]
-
-        # Handle prompt change
-        if selected_prompt_name != current_prompt:
-            change_prompt_and_reset(selected_prompt_name)
-
-        st.markdown("---")
 
         # Conversation management
         conversation_id = st.session_state.get("openai_conversation_id")
@@ -332,9 +283,6 @@ def chat_page():
                 st.rerun()
         else:
             st.info("No active conversation")
-
-        st.markdown("---")
-        st.markdown(f"**Current Prompt:** {prompt_display_names.get(current_prompt, current_prompt)}")
     st.markdown("*Help Rabbit understand Intermediate Microeconomics concepts*")
     st.markdown("### Problem: Tax in a Perfectly Competitive Industry")
     st.markdown("""Assume that a perfectly competitive, constant-cost industry (with free entry and exit) is in along-run equilibrium with 40 firms. The market demand function is downward sloping. All firms have the same U-shaped average cost functions. Each firm produces 60 units of output, which it sells at a price of \$27 per unit; out of this amount, each firm pays a $3 tax per unit of output. Please refer to the graphs below, which depict the initial equilibrium.
@@ -579,16 +527,10 @@ c) Explain what would happen in the long run (LR) to the equilibrium price and i
     # Action buttons
     col1, col2, col3, col4 = st.columns([1, 1.5, 1.5, 1])
 
-    # Show Hint button
+    # Show Hint button (disabled since we only use rabbit_v5)
     with col2:
-        hint_available, _ = get_next_hint()
-        current_prompt = st.session_state.get("current_prompt", "rabbit_v1")
-        if (not st.session_state.conversation_finished and
-            st.session_state.chat_history and
-            hint_available and
-            current_prompt == "rabbit_v3"):
-            if st.button("Show Hint", key="show_hint", use_container_width=True):
-                show_next_hint()
+        # Hint functionality removed since rabbit_v5 doesn't use hints
+        pass
 
     # End Study Session button
     with col3:
